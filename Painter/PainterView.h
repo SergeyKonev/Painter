@@ -19,6 +19,7 @@
 #define OP_MYFIGURE 6
 #define OP_MYPOLYGONFIGURE 7
 #define OP_SPLINE   8
+#define OP_MYSPLINEFIGURE 9
 
 #define OP_SELECT	10
 
@@ -92,6 +93,7 @@ protected:
 	afx_msg void OnEditAddshapePolyline();
 	afx_msg void OnEditAddshapePolygon();
 	afx_msg void OnEditAddshapeMyPolygonFigure();
+	afx_msg void OnEditAddshapeMySplineFigure();
 	afx_msg void OnEditAddshapeSpline();
 	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
 	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);

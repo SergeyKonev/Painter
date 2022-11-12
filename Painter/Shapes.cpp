@@ -201,11 +201,6 @@ CMyFigure::CMyFigure(): CBasePoint()
 	m_wSize=40;
 } 
 
-IMPLEMENT_SERIAL(CMyFigure, CObject, 1)
-void CMyFigure::Serialize(CArchive &ar)
-{
-	CMyFigure::Serialize(ar);
-}
 
 void CMyFigure::Show(CDC* pDC)
 {
@@ -229,43 +224,40 @@ void CMyFigure::Show(CDC* pDC)
 void CMyFigure::GetRegion(CRgn &Rgn)
 {
 	int s=m_wSize/2;
-	Rgn.CreateEllipticRgn(x-s, y-s, x+s, y+s);
+	Rgn.CreateRectRgn(x-s, y-s, x+s, y+s);
 }
 
 
 ////////////////////////////////////////
 // Реализация методов класса CMyPolygonFigure
 
-CMyPolygonFigure::CMyPolygonFigure(int x, int y, WORD s) : CBasePoint(x, y, s)
+CMyPolygonFigure::CMyPolygonFigure(int x, int y, WORD s)
 {
 	m_PointsArray.Add(CPoint(x, y));
 	m_PointsArray.Add(CPoint(x - s, y - s));
 	m_PointsArray.Add(CPoint(x - s / 4, y - s));
+
+
 	m_PointsArray.Add(CPoint(x - s / 4, y - 3*s));
 	m_PointsArray.Add(CPoint(x + s / 4, y - 3*s));
+
+
 	m_PointsArray.Add(CPoint(x + s / 4, y - s));
 	m_PointsArray.Add(CPoint(x + s, y - s));
-
 
 	m_wSize = s;
 }
 
-CMyPolygonFigure::CMyPolygonFigure() : CBasePoint()
+CMyPolygonFigure::CMyPolygonFigure() : CPolygon()
 {
 	m_wSize = 40;
-}
-
-IMPLEMENT_SERIAL(CMyPolygonFigure, CObject, 1)
-void CMyPolygonFigure::Serialize(CArchive& ar)
-{
-	CMyPolygonFigure::Serialize(ar);
 }
 
 void CMyPolygonFigure::Show(CDC* pDC)
 {
 	int s = m_wSize / 2;
-	SetPen(RGB(0, 255, 255), 100, PS_GEOMETRIC);
-	SetBrush(RGB(255, 255, 255));
+	//SetPen(RGB(0, 255, 255), 100, PS_GEOMETRIC);
+	//SetBrush(RGB(255, 255, 255));
 	PrepareDC(pDC);
 	// Рисуем 
 	pDC->Polygon(m_PointsArray.GetData(), m_PointsArray.GetSize());
@@ -298,34 +290,62 @@ CSpline::~CSpline()
 	m_PointsArray.RemoveAll();
 }
 
-
-IMPLEMENT_SERIAL(CSpline, CObject, 1)
-void CSpline::Serialize(CArchive& ar)
-{
-	m_PointsArray.Serialize(ar);
-	CBasePoint::Serialize(ar);
-}
 void CSpline::Show(CDC* pDC)
 {
-	if ( m_PointsArray.GetSize() >= 4) {
-		pDC->PolyBezier(m_PointsArray.GetData(), m_PointsArray.GetSize() - (m_PointsArray.GetSize() - 4) % 3);
-		for (int i = m_PointsArray.GetSize() - ((m_PointsArray.GetSize() - 4) % 3); i < m_PointsArray.GetSize(); i++) {
-			pDC->Ellipse(m_PointsArray[i].x - m_wSize, m_PointsArray[i].y - m_wSize, m_PointsArray[i].x + m_wSize, m_PointsArray[i].y + m_wSize);
-		}
-	}
-	else {
-		pDC->PolyBezier(m_PointsArray.GetData(), m_PointsArray.GetSize());
-		for (int i = m_PointsArray.GetSize() - (m_PointsArray.GetSize() % 4); i < m_PointsArray.GetSize(); i++) {
-			pDC->Ellipse(m_PointsArray[i].x - m_wSize, m_PointsArray[i].y - m_wSize, m_PointsArray[i].x + m_wSize, m_PointsArray[i].y + m_wSize);
-		}
-	}
-		
 	// Устанавливаем перео и кисть
 	PrepareDC(pDC);
 	// Рисуем 
-	pDC->PolyBezier(m_PointsArray.GetData(), m_PointsArray.GetSize());
+	this->MakeControlPoints();
+	//pDC->Polyline(m_PointsArray.GetData(), m_PointsArray.GetSize());
+	//pDC->LineTo(newPointsArray[3].x+po.x, newPointsArray[3].y + po.y);
+	//for (int i = 0; i < newPointsArray.GetSize(); i++) {
+	//	pDC->Ellipse(newPointsArray[i].x - 50, newPointsArray[i].y - 50, newPointsArray[i].x + 50, newPointsArray[i].y + 50);
+	//}
+	pDC->PolyBezier(newPointsArray.GetData(), newPointsArray.GetSize());
 	// Восстанавливаем контекст
 	RestoreDC(pDC);
+}
+
+void CSpline::MakeControlPoints()
+{
+	newPointsArray.RemoveAll();
+	int n = 0;
+	int count = 0;
+	newPointsArray.Add(m_PointsArray[0]);
+
+
+	for (int i = 1; i < m_PointsArray.GetSize(); i++) {
+		newPointsArray.Add(GetMiddle(m_PointsArray[i-1], m_PointsArray[i], 0.5));
+		newPointsArray.Add(GetMiddle(m_PointsArray[i-1], m_PointsArray[i], 2));
+		newPointsArray.Add(m_PointsArray[i]);
+	}
+	
+	for (int i = 3; i < newPointsArray.GetSize()-3; i += 3) {
+		CPoint v1 = newPointsArray[i-3] - newPointsArray[i];
+		CPoint v1n = CPoint(1000 * v1.x / GetLenght(v1, 0), 1000 * v1.y / GetLenght(v1, 0));
+		CPoint v2 = newPointsArray[i+3] - newPointsArray[i];
+		CPoint v2n = CPoint(1000 * v2.x / GetLenght(v2, 0), 1000 * v2.y / GetLenght(v2, 0));
+		CPoint v3 = CPoint(v1n.x + v2n.x, v1n.y + v2n.y); // биссектрисса 
+		CPoint v4 = CPoint(v3.y, -v3.x); // перп вектор 1 
+
+		auto a = angle(v4.x, v4.y, newPointsArray[i + 1].x - newPointsArray[i].x, newPointsArray[i + 1].y - newPointsArray[i].y);
+		auto b = angle(v4.x, v4.y, newPointsArray[i - 1].x - newPointsArray[i].x, newPointsArray[i - 1].y - newPointsArray[i].y);
+
+		if ( a <= b ) {
+			CPoint v5 = CPoint(GetLenght(newPointsArray[i + 1], newPointsArray[i]) * v4.x / sqrt(v4.x * v4.x + v4.y * v4.y), GetLenght(newPointsArray[i + 1], newPointsArray[i]) * v4.y / sqrt(v4.x * v4.x + v4.y * v4.y));//норм перп вектор
+			CPoint v6 = CPoint(GetLenght(newPointsArray[i - 1], newPointsArray[i]) * v4.x / sqrt(v4.x * v4.x + v4.y * v4.y), GetLenght(newPointsArray[i - 1], newPointsArray[i]) * v4.y / sqrt(v4.x * v4.x + v4.y * v4.y));//норм перп вектор
+			newPointsArray[i + 1] = newPointsArray[i] + v5;
+			newPointsArray[i - 1] = newPointsArray[i] - v6;
+		}
+
+		else {
+			CPoint v5 = CPoint(GetLenght(newPointsArray[i + 1], newPointsArray[i]) * v4.x / sqrt(v4.x * v4.x + v4.y * v4.y), GetLenght(newPointsArray[i + 1], newPointsArray[i]) * v4.y / sqrt(v4.x * v4.x + v4.y * v4.y));//норм перп вектор
+			CPoint v6 = CPoint(GetLenght(newPointsArray[i - 1], newPointsArray[i]) * v4.x / sqrt(v4.x * v4.x + v4.y * v4.y), GetLenght(newPointsArray[i - 1], newPointsArray[i]) * v4.y / sqrt(v4.x * v4.x + v4.y * v4.y));//норм перп вектор
+			newPointsArray[i + 1] = newPointsArray[i] - v5;
+			newPointsArray[i - 1] = newPointsArray[i] + v6;
+		}
+		
+	}
 }
 
 void CSpline::GetRegion(CRgn& Rgn)
@@ -837,3 +857,92 @@ double Dist(POINT3D *pP1, POINT3D* pP2)
 	if(pP1==NULL||pP2==NULL) return 0;
 	return sqrt(pow(pP1->x-pP2->x, 2)+pow(pP1->y-pP2->y, 2)+pow(pP1->z-pP2->z, 2));
 };
+
+////////////////////////////////////////
+// Реализация методов класса CMyPolylineFigure
+
+CMySplineFigure::CMySplineFigure(int x, int y, WORD s)
+{
+	m_PointsArray.Add(CPoint(x, y));
+	m_PointsArray.Add(CPoint(x - s, y - s));
+	m_PointsArray.Add(CPoint(x - s / 4, y - s));
+
+	//m_PointsArray.Add(CPoint(x - s / 4, y - 2 * s));
+
+	m_PointsArray.Add(CPoint(x - s / 4, y - 3 * s));
+	m_PointsArray.Add(CPoint(x + s / 4, y - 3 * s));
+
+	//m_PointsArray.Add(CPoint(x + s / 4, y - 2 * s));
+
+	m_PointsArray.Add(CPoint(x + s / 4, y - s));
+	m_PointsArray.Add(CPoint(x + s, y - s));
+	m_PointsArray.Add(CPoint(x, y ));
+	m_wSize = s;
+}
+
+void CMySplineFigure::Show(CDC* pDC)
+{
+	int s = m_wSize / 2;
+	//SetPen(RGB(0, 255, 255), 100, PS_GEOMETRIC);
+	//SetBrush(RGB(255, 255, 255));
+
+	PrepareDC(pDC);
+	// Рисуем 
+	//pDC->Polyline(m_PointsArray.GetData(), m_PointsArray.GetSize());
+	this->MakeControlPoints();
+
+	pDC->PolyBezier(newPointsArray.GetData(), newPointsArray.GetSize());
+	// Восстанавливаем контекст
+	RestoreDC(pDC);
+}
+
+void CMySplineFigure::Transform(const CPoint& point0, double ang, int a, int b)
+{
+	for (int i = 0; i < m_PointsArray.GetSize(); i++)
+		m_PointsArray[i] = ::Transform(m_PointsArray[i], m_PointsArray[0], ang, a, b);
+};
+
+
+void CMySplineFigure::MakeControlPoints()
+{
+	newPointsArray.RemoveAll();
+	int n = 0;
+	int count = 0;
+	newPointsArray.Add(m_PointsArray[0]);
+
+
+	for (int i = 1; i < m_PointsArray.GetSize(); i++) {
+		newPointsArray.Add(GetMiddle(m_PointsArray[i - 1], m_PointsArray[i], 0.5));
+		newPointsArray.Add(GetMiddle(m_PointsArray[i - 1], m_PointsArray[i], 2));
+		newPointsArray.Add(m_PointsArray[i]);
+	}
+
+	for (int i = 3; i < newPointsArray.GetSize() - 3; i += 3) {
+		CPoint v1 = newPointsArray[i - 3] - newPointsArray[i];
+		CPoint v1n = CPoint(1000 * v1.x / GetLenght(v1, 0), 1000 * v1.y / GetLenght(v1, 0));
+		CPoint v2 = newPointsArray[i + 3] - newPointsArray[i];
+		CPoint v2n = CPoint(1000 * v2.x / GetLenght(v2, 0), 1000 * v2.y / GetLenght(v2, 0));
+		CPoint v3 = CPoint(v1n.x + v2n.x, v1n.y + v2n.y); // биссектрисса 
+		CPoint v4 = CPoint(v3.y, -v3.x); // перп вектор 1 
+
+		auto a = angle(v4.x, v4.y, newPointsArray[i + 1].x - newPointsArray[i].x, newPointsArray[i + 1].y - newPointsArray[i].y);
+		auto b = angle(v4.x, v4.y, newPointsArray[i - 1].x - newPointsArray[i].x, newPointsArray[i - 1].y - newPointsArray[i].y);
+
+		if (a <= b) {
+			CPoint v5 = CPoint(GetLenght(newPointsArray[i + 1], newPointsArray[i]) * v4.x / sqrt(v4.x * v4.x + v4.y * v4.y), GetLenght(newPointsArray[i + 1], newPointsArray[i]) * v4.y / sqrt(v4.x * v4.x + v4.y * v4.y));//норм перп вектор
+			CPoint v6 = CPoint(GetLenght(newPointsArray[i - 1], newPointsArray[i]) * v4.x / sqrt(v4.x * v4.x + v4.y * v4.y), GetLenght(newPointsArray[i - 1], newPointsArray[i]) * v4.y / sqrt(v4.x * v4.x + v4.y * v4.y));//норм перп вектор
+			newPointsArray[i + 1] = newPointsArray[i] + v5;
+			newPointsArray[i - 1] = newPointsArray[i] - v6;
+		}
+
+		else {
+			CPoint v5 = CPoint(GetLenght(newPointsArray[i + 1], newPointsArray[i]) * v4.x / sqrt(v4.x * v4.x + v4.y * v4.y), GetLenght(newPointsArray[i + 1], newPointsArray[i]) * v4.y / sqrt(v4.x * v4.x + v4.y * v4.y));//норм перп вектор
+			CPoint v6 = CPoint(GetLenght(newPointsArray[i - 1], newPointsArray[i]) * v4.x / sqrt(v4.x * v4.x + v4.y * v4.y), GetLenght(newPointsArray[i - 1], newPointsArray[i]) * v4.y / sqrt(v4.x * v4.x + v4.y * v4.y));//норм перп вектор
+			newPointsArray[i + 1] = newPointsArray[i] - v5;
+			newPointsArray[i - 1] = newPointsArray[i] + v6;
+		}
+
+	}
+}
+
+

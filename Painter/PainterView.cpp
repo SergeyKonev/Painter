@@ -46,11 +46,13 @@ BEGIN_MESSAGE_MAP(CPainterView, CScrollView)
 	ON_COMMAND(ID_EDIT_CHANGEORDER_BOTTOM, OnEditChangeorderBottom)
 	ON_COMMAND(ID_EDIT_DELETE, OnEditDelete)
 	ON_COMMAND(ID_EDIT_ADDSHAPE_SURFACE, OnEditAddshapeSurface)
+	ON_COMMAND(ID_EDIT_ADDSHAPE_MYSPLINEFIGURE, OnEditAddshapeMySplineFigure)
 	//}}AFX_MSG_MAP
 	// Standard printing commands
 	ON_COMMAND(ID_FILE_PRINT, CView::OnFilePrint)
 	ON_COMMAND(ID_FILE_PRINT_DIRECT, CView::OnFilePrint)
 	ON_COMMAND(ID_FILE_PRINT_PREVIEW, CView::OnFilePrintPreview)
+	ON_COMMAND(ID_SAVE_BMP, OnSaveBmp)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -228,6 +230,7 @@ void CPainterView::OnLButtonUp(UINT nFlags, CPoint point)
 	case OP_SQUARE:
 	case OP_MYFIGURE:
 	case OP_MYPOLYGONFIGURE:
+	case OP_MYSPLINEFIGURE:
 	case OP_SURFACE:
 		AddShape(m_CurOper, m_FirstPoint, LogPoint);
 		// Указываем, что окно надо перерисовать
@@ -273,6 +276,7 @@ void CPainterView::OnMouseMove(UINT nFlags, CPoint point)
 		case OP_POINT:
 		case OP_CIRCLE:
 		case OP_SQUARE:
+		case OP_MYSPLINEFIGURE:
 		case OP_SURFACE:
 			if(nFlags==MK_LBUTTON) DrawMoveLine(m_FirstPoint, m_CurMovePoint);
 			m_CurMovePoint=LogPoint;
@@ -377,7 +381,6 @@ void CPainterView::AddShape(int shape, CPoint first_point, CPoint second_point)
 	switch(shape)
 	{
 	case OP_SPLINE:
-		break;
 	case OP_LINE:
 	break;
 	case OP_POINT:
@@ -407,8 +410,17 @@ void CPainterView::AddShape(int shape, CPoint first_point, CPoint second_point)
 		pShape = new CMyFigure(first_point.x, first_point.y, size * 2);
 		break;
 	case OP_MYPOLYGONFIGURE:
-		// Создаем объект
 		pShape = new CMyPolygonFigure(first_point.x, first_point.y, size * 2);
+		// Красная линия шириной 1 мм
+		pShape->SetPen(RGB(0, 0, 0), 100, PS_GEOMETRIC);
+		// Темно-серая диагональная штриховка
+		pShape->SetBrush(RGB(100, 100, 100), 0, HS_DIAGCROSS);
+		break;
+	case OP_MYSPLINEFIGURE:
+		// Создаем объект
+		pShape = new CMySplineFigure(first_point.x, first_point.y, size * 2);
+		// Красная линия шириной 1 мм
+		pShape->SetPen(RGB(0, 0, 0), 100, PS_GEOMETRIC);
 		break;
 	case OP_SURFACE:
 		// Создаем объект - поверхность
@@ -787,4 +799,10 @@ void CPainterView::OnSaveBmp()
 						(LPCTSTR)Filter, this);
 	if(SaveDlg.DoModal()==IDCANCEL) return;
 	SaveBMP(SaveDlg.GetPathName());
+}
+
+void CPainterView::OnEditAddshapeMySplineFigure()
+{
+	m_CurOper = OP_MYSPLINEFIGURE;
+	::SetClassLong(GetSafeHwnd(), GCL_HCURSOR, (LONG)m_hcurSurface);
 }

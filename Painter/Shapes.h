@@ -74,10 +74,6 @@ class CSquare: public CBasePoint
 //класс MyFigure
 class CMyFigure : public CBasePoint
 {
-	DECLARE_SERIAL(CMyFigure)
-protected:
-	// Метод сериализации
-	void Serialize(CArchive& ar);
 public:
 	// Конструкторы
 	CMyFigure(int x, int y, WORD s);
@@ -91,43 +87,16 @@ public:
 };
 
 
-////////////////////////////////////////////////////
-//класс MyPolygonFigure
-class CMyPolygonFigure : public CBasePoint
-{
-	DECLARE_SERIAL(CMyPolygonFigure)
-protected:
-	// Метод сериализации
-	void Serialize(CArchive& ar);
-public:
-	CArray <CPoint, CPoint> m_PointsArray;
-	// Конструкторы
-	CMyPolygonFigure(int x, int y, WORD s);
-	CMyPolygonFigure();
-	~CMyPolygonFigure() {};
-	//Методы
-		// Отображает фигуру на экране
-	void Show(CDC* pDC);
-	// Сообщает область захвата
-	void GetRegion(CRgn& Rgn);
-	void Transform(const CPoint& point0, double ang, int a, int b);
-};
-
 
 ////////////////////////////////////////////////////
 //класс сплайновой кривой
 class CSpline : public CBasePoint
 {
-	DECLARE_SERIAL(CSpline)
-	
-
-protected:
-	// Метод сериализации
-	void Serialize(CArchive& ar);
 public:
 	// Динамический массив точек-вершин
 	CArray <CPoint, CPoint> m_PointsArray;
-	CArray <CPoint, CPoint> m_PointsArrayMain;
+	CArray <CPoint, CPoint> newPointsArray;
+	CPoint po;
 
 	// Конструкторы
 	CSpline();
@@ -135,10 +104,10 @@ public:
 	//Методы
 		// Отображает фигуру на экране
 	void Show(CDC* pDC);
+	void MakeControlPoints();
 	// Сообщает область захвата
 	void GetRegion(CRgn& Rgn);
 };
-
 
 
 
@@ -171,6 +140,43 @@ class CPolygon: public CBasePoint
 	// Выполняет преобразование на плоскости
 	void Transform(const CPoint &point0, double ang, int a, int b);
 };
+
+
+////////////////////////////////////////////////////
+//класс MyPolygonFigure
+class CMyPolygonFigure : public CPolygon
+{
+public:
+	CArray <CPoint, CPoint> m_PointsArray;
+	// Конструкторы
+	CMyPolygonFigure(int x, int y, WORD s);
+	CMyPolygonFigure();
+	~CMyPolygonFigure() {};
+	//Методы
+		// Отображает фигуру на экране
+	void Show(CDC* pDC);
+	// Сообщает область захвата
+	void GetRegion(CRgn& Rgn);
+	void Transform(const CPoint& point0, double ang, int a, int b);
+};
+
+
+class CMySplineFigure : public CSpline
+{
+public:
+	//int m_wSize;
+	CArray <CPoint, CPoint> m_PointsArray;
+	CArray <CPoint, CPoint> newPointsArray;
+	CMySplineFigure(int x, int y, WORD s);
+	CMySplineFigure();
+	~CMySplineFigure() {};
+	//Методы
+		// Отображает фигуру на экране
+	void Show(CDC* pDC);
+	void Transform(const CPoint& point0, double ang, int a, int b);
+	void MakeControlPoints();
+};
+
 
 ////////////////////////////////////////////////////
 // 3D точка

@@ -166,6 +166,7 @@ BEGIN
             MENUITEM "MyFigure",                    ID_EDIT_ADDSHAPE_MYFIGURE
             MENUITEM "MyPolygonFigure",             ID_EDIT_ADDSHAPE_MYPOLYGONFIGURE
             MENUITEM "Spline",                      ID_EDIT_ADDSHAPE_SPLINE
+            MENUITEM "MySplineFigure",              ID_EDIT_ADDSHAPE_MYSPLINEFIGURE
         END
         POPUP "Change &Order"
         BEGIN
