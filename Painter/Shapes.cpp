@@ -945,4 +945,19 @@ void CMySplineFigure::MakeControlPoints()
 	}
 }
 
+CPic::CPic(int x, int y, HBITMAP hBmp)
+{
+	this->x = x;
+	this->y = y;
+	hBM = hBmp;
+}
 
+void CPic::Show(CDC* pdc)
+{
+	HDC hMemDC = CreateCompatibleDC(pdc->m_hDC);
+	HBITMAP BM;
+	GetObject(hBM, sizeof(BM), &BM);
+	SelectObject(hMemDC, hBM);
+	StretchBlt(pdc->m_hDC, x, y, 5000, -5000, hMemDC, 0, 0, 5000, 5000, SRCCOPY);
+	DeleteDC(hMemDC);
+}

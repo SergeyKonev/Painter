@@ -246,6 +246,28 @@ class C3DShape: public CBasePoint
 	BOOL OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags, UINT nMyFlags);
 };
 
+
+//класс картинки
+class CPic : public CBasePoint
+{
+	HBITMAP hBM;
+	//DECLARE_SERIAL(CSquare)
+//protected:
+	//// Метод сериализации
+	//void Serialize(CArchive& ar);
+public:
+	// Конструкторы
+	CPic(int x, int y, HBITMAP hBmp);
+	CPic();
+	~CPic() {};
+	//Методы
+		// Отображает фигуру на экране
+	void Show(CDC* pDC);
+	// Сообщает область захвата
+	//void GetRegion(CRgn& Rgn);
+};
+
+
 /////////////////////////////////////////////////////////////////////////////////
 // Глобальные функции для работы с поверхностями,
 // из которых, по-хорошему, надо бы сделать класс C3DSurface
@@ -279,3 +301,5 @@ void AddTriangleSection(C3DPolygon *p3DPolygon, POINT3D *pP1, POINT3D *pP2, POIN
 int CutCross(double level, POINT3D *pP1, POINT3D *pP2, double &x, double &y);
 // Рассчитывает расстояние между двумя точками
 double Dist(POINT3D *pP1, POINT3D* pP2);
+
+

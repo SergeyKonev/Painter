@@ -22,6 +22,7 @@
 #define OP_MYSPLINEFIGURE 9
 
 #define OP_SELECT	10
+#define OP_PIC 11
 
 class CBasePoint;
 class CPainterView : public CScrollView
@@ -106,6 +107,7 @@ protected:
 	afx_msg void OnEditAddshapeSurface();
 	//afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnSaveBmp();
+	afx_msg void OnEditAddPic();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };

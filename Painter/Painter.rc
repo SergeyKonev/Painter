@@ -167,6 +167,7 @@ BEGIN
             MENUITEM "MyPolygonFigure",             ID_EDIT_ADDSHAPE_MYPOLYGONFIGURE
             MENUITEM "Spline",                      ID_EDIT_ADDSHAPE_SPLINE
             MENUITEM "MySplineFigure",              ID_EDIT_ADDSHAPE_MYSPLINEFIGURE
+            MENUITEM "AddPic",                      ID_EDIT_ADDPIC
         END
         POPUP "Change &Order"
         BEGIN
@@ -449,7 +450,6 @@ BEGIN
     ID_EDIT_CHANGEORDER_TOP "Move shape at the top level\nTop"
     ID_EDIT_CHANGEORDER_STEPUP "Move shape at the one level up\nUp"
     ID_EDIT_CHANGEORDER_STEPDOWN "Move shape at the one level down\nDown"
-    ID_EDIT_CHANGEORDER_BOTTOM "Move shape at the bottom level\nBottom"
 END
 
 STRINGTABLE

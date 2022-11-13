@@ -47,13 +47,17 @@ BEGIN_MESSAGE_MAP(CPainterView, CScrollView)
 	ON_COMMAND(ID_EDIT_DELETE, OnEditDelete)
 	ON_COMMAND(ID_EDIT_ADDSHAPE_SURFACE, OnEditAddshapeSurface)
 	ON_COMMAND(ID_EDIT_ADDSHAPE_MYSPLINEFIGURE, OnEditAddshapeMySplineFigure)
+	ON_COMMAND(ID_EDIT_ADDPIC, OnEditAddPic)
 	//}}AFX_MSG_MAP
 	// Standard printing commands
 	ON_COMMAND(ID_FILE_PRINT, CView::OnFilePrint)
 	ON_COMMAND(ID_FILE_PRINT_DIRECT, CView::OnFilePrint)
 	ON_COMMAND(ID_FILE_PRINT_PREVIEW, CView::OnFilePrintPreview)
 	ON_COMMAND(ID_SAVE_BMP, OnSaveBmp)
+
 END_MESSAGE_MAP()
+
+HBITMAP hBM;
 
 /////////////////////////////////////////////////////////////////////////////
 // CPainterView construction/destruction
@@ -225,6 +229,7 @@ void CPainterView::OnLButtonUp(UINT nFlags, CPoint point)
 	ReleaseDC(pDC);
 	switch(m_CurOper)
 	{
+	case OP_PIC:
 	case OP_POINT:
 	case OP_CIRCLE:
 	case OP_SQUARE:
@@ -354,7 +359,6 @@ void CPainterView::OnPrepareDC(CDC* pDC, CPrintInfo* pInfo)
 	pDC->SetViewportOrg(OriginPoint);
 	// Ограничим область доступную для рисования
 	pDC->IntersectClipRect( 0,0, pDoc->m_wSheet_Width, pDoc->m_wSheet_Height);
-
 }
 
 BOOL CPainterView::OnEraseBkgnd(CDC* pDC) 
@@ -380,6 +384,8 @@ void CPainterView::AddShape(int shape, CPoint first_point, CPoint second_point)
 
 	switch(shape)
 	{
+	case OP_PIC:
+		pShape = new CPic(first_point.x, first_point.y, hBM);
 	case OP_SPLINE:
 	case OP_LINE:
 	break;
@@ -799,6 +805,27 @@ void CPainterView::OnSaveBmp()
 						(LPCTSTR)Filter, this);
 	if(SaveDlg.DoModal()==IDCANCEL) return;
 	SaveBMP(SaveDlg.GetPathName());
+}
+
+void CPainterView::OnEditAddPic()
+{
+	CString sFilePath;
+	const TCHAR szFilter[] = _T("BMP Files (*.bmp)|*.bmp|All Files (*.*)|*.*||");
+	CFileDialog dlg(FALSE, _T("csv"), NULL,
+		OFN_HIDEREADONLY | OFN_FILEMUSTEXIST, szFilter, this);
+	if (dlg.DoModal() == IDOK)
+	{
+		sFilePath = dlg.GetPathName();
+	}
+	hBM = (HBITMAP)LoadImage(AfxGetInstanceHandle(), sFilePath,
+		IMAGE_BITMAP, 5000, 5000, LR_CREATEDIBSECTION | LR_DEFAULTSIZE | LR_LOADFROMFILE);
+	//auto pShape = new CPic(0, 0, hBM);
+	//// Добавляем в конец списка
+	//CPainterDoc* pDoc = GetDocument();
+	//pDoc->m_ShapesList.AddTail(pShape);
+	m_CurOper = OP_PIC;
+	::SetClassLong(GetSafeHwnd(), GCL_HCURSOR, (LONG)m_hcurSurface);
+
 }
 
 void CPainterView::OnEditAddshapeMySplineFigure()
